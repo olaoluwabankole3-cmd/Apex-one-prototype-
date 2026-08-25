@@ -5,7 +5,7 @@ import { BackendError } from "@/lib/backend/core/errors";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const updated = await actionService.advanceAction(params.id, ctx);
     return NextResponse.json({ success: true, data: updated });
   } catch (err: any) {

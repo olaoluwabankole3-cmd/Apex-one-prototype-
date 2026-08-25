@@ -30,7 +30,8 @@ import {
 } from "lucide-react";
 import InternalOnlyShield from "@/components/layout/InternalOnlyShield";
 import { useRole } from "@/components/layout/RoleContext";
-import { company } from "@/lib/mockData";
+import { company } from "@/lib/organizationConfig";
+
 
 // Type definitions for Analytics Intelligence
 type ScopeType = "current" | "previous" | "3year" | "5year";

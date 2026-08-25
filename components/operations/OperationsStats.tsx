@@ -1,15 +1,41 @@
 "use client";
 
-import { ShieldCheck, AlertTriangle, Clock, Cpu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShieldCheck, AlertTriangle, Clock, Cpu, Loader2 } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import AnimatedNumber from "@/components/dashboard/AnimatedNumber";
-import { subsidiaryOps } from "@/lib/mockData";
+import { operationsRepository } from "@/lib/data/repositories";
+import { SubsidiaryOps } from "@/lib/types";
 
 export default function OperationsStats() {
-  const avgSla = subsidiaryOps.reduce((sum, s) => sum + s.slaCompliance, 0) / subsidiaryOps.length;
-  const totalIncidents = subsidiaryOps.reduce((sum, s) => sum + s.openIncidents, 0);
-  const avgResolution = subsidiaryOps.reduce((sum, s) => sum + s.avgResolutionHours, 0) / subsidiaryOps.length;
-  const avgAutomation = subsidiaryOps.reduce((sum, s) => sum + s.automationCoverage, 0) / subsidiaryOps.length;
+  const [data, setData] = useState<SubsidiaryOps[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    operationsRepository.getSubsidiaryOps()
+      .then((ops) => {
+        if (isMounted) {
+          setData(ops);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load subsidiary operations stats:", err);
+        if (isMounted) {
+          setData([]);
+          setLoading(false);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const avgSla = data.length ? data.reduce((sum, s) => sum + s.slaCompliance, 0) / data.length : 0;
+  const totalIncidents = data.reduce((sum, s) => sum + s.openIncidents, 0);
+  const avgResolution = data.length ? data.reduce((sum, s) => sum + s.avgResolutionHours, 0) / data.length : 0;
+  const avgAutomation = data.length ? data.reduce((sum, s) => sum + s.automationCoverage, 0) / data.length : 0;
 
   const stats = [
     {
@@ -64,15 +90,23 @@ export default function OperationsStats() {
                 <Icon size={15} strokeWidth={1.75} />
               </span>
             </div>
-            <AnimatedNumber
-              value={stat.value}
-              decimals={stat.decimals}
-              suffix={stat.suffix}
-              className="mt-3 block font-display text-[26px] font-bold tabular-nums tracking-tight text-ivory"
-            />
+            {loading ? (
+              <div className="mt-3 flex items-center gap-2 py-1 text-ivory/40">
+                <Loader2 className="animate-spin" size={16} />
+                <span className="text-xs">Loading...</span>
+              </div>
+            ) : (
+              <AnimatedNumber
+                value={stat.value}
+                decimals={stat.decimals}
+                suffix={stat.suffix}
+                className="mt-3 block font-display text-[26px] font-bold tabular-nums tracking-tight text-ivory"
+              />
+            )}
           </GlassCard>
         );
       })}
     </div>
   );
 }
+

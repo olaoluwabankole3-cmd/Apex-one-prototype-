@@ -5,7 +5,7 @@ import { BackendError } from "@/lib/backend/core/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category") || undefined;
     const status = searchParams.get("status") || undefined;

@@ -1,0 +1,333 @@
+export interface UnifiedCustomer {
+  id: string;
+  name: string;
+  businessUnit: "Enterprise Operations" | "Commercial Operations" | "Strategic Accounts" | "Customer Operations";
+  tier: "Enterprise" | "Mid-Market" | "SMB";
+  status: "active" | "at-risk" | "onboarding";
+  healthScore: number;
+  arrNaira: number; // in Millions Naira (e.g. 1200 = ₦1.2B)
+  arrUSD: number; // in Millions USD
+  ltvNaira: number; // in Millions Naira
+  ltvUSD: number;
+  since: string;
+  owner: string;
+  contactName: string;
+  contactRole: string;
+  contactEmail: string;
+  industry: string;
+  growthYoY: number; // percentage
+  engagementLevel: number; // percentage
+  contractStatus: string;
+  supportActivity: string;
+  supportTickets: number;
+  paymentBehavior: string;
+  paymentStatus: "pristine" | "standard" | "delayed";
+  riskLevel: string;
+  riskScore: number; // 0 - 100
+  expansionPotential: "High" | "Medium" | "Low";
+  potentialArrNaira: number;
+  opportunityNaira: number;
+  opportunityReason: string;
+  riskReasons: string[];
+  aiInsight: string;
+  recommendedAction: string;
+  tags?: string[];
+}
+
+export const demoCustomers: UnifiedCustomer[] = [
+  {
+    id: "cust-1",
+    name: "Meridian Logistics Group",
+    businessUnit: "Commercial Operations",
+    tier: "Enterprise",
+    status: "at-risk",
+    healthScore: 34,
+    arrNaira: 1200,
+    arrUSD: 1.84,
+    ltvNaira: 8400,
+    ltvUSD: 12.92,
+    since: "Mar 2023",
+    owner: "Elena Cho",
+    contactName: "Marcus Fenwick",
+    contactRole: "VP of Finance",
+    contactEmail: "m.fenwick@meridianlogistics.com",
+    industry: "Logistics & Supply Chain",
+    growthYoY: -12.4,
+    engagementLevel: 34,
+    contractStatus: "Expiring in 45 Days",
+    supportActivity: "Severe Escalations",
+    supportTickets: 18,
+    paymentBehavior: "Delayed (Avg 45 days late)",
+    paymentStatus: "delayed",
+    riskLevel: "Severe Risk",
+    riskScore: 84,
+    expansionPotential: "Low",
+    potentialArrNaira: 1810,
+    opportunityNaira: 610,
+    opportunityReason: "Transaction clearing speed dropped, triggering manual support queries. Offering automated clearing modules can re-engage cargo divisions and claw back the 12% usage drift.",
+    riskReasons: [
+      "12.4% drop in API call volume over trailing 90 days",
+      "Executive sponsor departed without warm handover in June 2026",
+      "Billing payment cycle extended from Net-30 to Net-60"
+    ],
+    aiInsight: "High probability of renewal dispute (84% churn risk). Primary driver is operational friction in clearing settlement batches.",
+    recommendedAction: "Schedule executive sponsor alignment session with VP of Finance and offer automated clearing modules under existing SLA bounds.",
+    tags: ["Renewal Due", "Usage Decline", "Sponsor Departure"]
+  },
+  {
+    id: "cust-2",
+    name: "Halden & Cross Partners",
+    businessUnit: "Strategic Accounts",
+    tier: "Enterprise",
+    status: "at-risk",
+    healthScore: 41,
+    arrNaira: 2030,
+    arrUSD: 3.12,
+    ltvNaira: 14200,
+    ltvUSD: 21.84,
+    since: "Jan 2022",
+    owner: "Priya Nair",
+    contactName: "Sarah Below",
+    contactRole: "Interim Ops Director",
+    contactEmail: "s.below@haldencross.com",
+    industry: "Investment Management",
+    growthYoY: -8.1,
+    engagementLevel: 41,
+    contractStatus: "Auto-Renewal in 90 Days",
+    supportActivity: "Moderate Tickets",
+    supportTickets: 9,
+    paymentBehavior: "Standard (Net 30)",
+    paymentStatus: "standard",
+    riskLevel: "High Risk",
+    riskScore: 68,
+    expansionPotential: "High",
+    potentialArrNaira: 3200,
+    opportunityNaira: 1170,
+    opportunityReason: "Halden & Cross holds unallocated asset management tranches. Presenting structured treasury yield hedging modules can unlock ₦1,170M in additional ARR.",
+    riskReasons: [
+      "Interim Ops Director reviewing alternative custody and analytics platforms",
+      "Quarterly portfolio rebalancing meetings missed twice consecutively"
+    ],
+    aiInsight: "Account is in transition following management restructuring. Engagement index down 18% over trailing 60 days.",
+    recommendedAction: "Engage Priya Nair to deliver customized portfolio analytics briefing to executive committee.",
+    tags: ["Sponsor Change", "High Value", "Renewal Review"]
+  },
+  {
+    id: "cust-3",
+    name: "Solace Home Insurance Co.",
+    businessUnit: "Customer Operations",
+    tier: "Mid-Market",
+    status: "at-risk",
+    healthScore: 52,
+    arrNaira: 625,
+    arrUSD: 0.96,
+    ltvNaira: 3800,
+    ltvUSD: 5.84,
+    since: "Jul 2023",
+    owner: "Jordan Lee",
+    contactName: "Anita Brooks",
+    contactRole: "Claims Director",
+    contactEmail: "a.brooks@solacehome.com",
+    industry: "Insurance Underwriting",
+    growthYoY: 2.1,
+    engagementLevel: 56,
+    contractStatus: "Active Multi-Year",
+    supportActivity: "High Claims Backlog",
+    supportTickets: 24,
+    paymentBehavior: "Standard (Net 30)",
+    paymentStatus: "standard",
+    riskLevel: "Moderate Risk",
+    riskScore: 48,
+    expansionPotential: "Medium",
+    potentialArrNaira: 950,
+    opportunityNaira: 325,
+    opportunityReason: "Solace's claims intake volume grew 40% YoY. Upgrading to automated claims classification engine will eliminate their backlog.",
+    riskReasons: [
+      "Claims review SLA latency averaging 2.8 days against contracted 1.0 day standard",
+      "Support ticket escalations increased 35% this quarter"
+    ],
+    aiInsight: "Customer is experiencing operational capacity bottlenecks that can be solved by automated claims triage module.",
+    recommendedAction: "Deploy Claims Automation Phase 2 pilot to bypass manual signature triggers and accelerate processing.",
+    tags: ["Support Escalation", "Capacity Bottleneck"]
+  },
+  {
+    id: "cust-4",
+    name: "Brightwell Regional Bank",
+    businessUnit: "Enterprise Operations",
+    tier: "Enterprise",
+    status: "at-risk",
+    healthScore: 58,
+    arrNaira: 1560,
+    arrUSD: 2.40,
+    ltvNaira: 9800,
+    ltvUSD: 15.07,
+    since: "Sep 2021",
+    owner: "Elena Cho",
+    contactName: "Tom Reyes",
+    contactRole: "Chief Operating Officer",
+    contactEmail: "t.reyes@brightwellbank.com",
+    industry: "Commercial Banking",
+    growthYoY: -4.3,
+    engagementLevel: 62,
+    contractStatus: "Active",
+    supportActivity: "Normal",
+    supportTickets: 6,
+    paymentBehavior: "Pristine",
+    paymentStatus: "pristine",
+    riskLevel: "Moderate Risk",
+    riskScore: 42,
+    expansionPotential: "High",
+    potentialArrNaira: 2400,
+    opportunityNaira: 840,
+    opportunityReason: "Brightwell is modernizing branch KYC workflows. Proposing digital identity scraper modules can expand contract ARR by ₦840M.",
+    riskReasons: [
+      "Trade settlement transaction velocity contracted 14% over 36 months",
+      "New compliance regulations causing KYC scanning backlogs"
+    ],
+    aiInsight: "Stable core customer with contracting transactional frequency due to legacy KYC friction.",
+    recommendedAction: "Offer automated KYC registry integration to streamline onboarding.",
+    tags: ["Contract Expansion", "Compliance Review"]
+  },
+  {
+    id: "cust-5",
+    name: "Vertex Holdings Corp.",
+    businessUnit: "Strategic Accounts",
+    tier: "Enterprise",
+    status: "active",
+    healthScore: 92,
+    arrNaira: 3100,
+    arrUSD: 4.77,
+    ltvNaira: 21500,
+    ltvUSD: 33.07,
+    since: "Jan 2020",
+    owner: "Priya Nair",
+    contactName: "David Chen",
+    contactRole: "Chief Investment Officer",
+    contactEmail: "d.chen@vertexholdings.com",
+    industry: "Diversified Conglomerate",
+    growthYoY: 24.6,
+    engagementLevel: 94,
+    contractStatus: "Multi-Year Lock (2028)",
+    supportActivity: "Low Tickets",
+    supportTickets: 2,
+    paymentBehavior: "Pristine (Advance)",
+    paymentStatus: "pristine",
+    riskLevel: "Minimal Risk",
+    riskScore: 8,
+    expansionPotential: "High",
+    potentialArrNaira: 4200,
+    opportunityNaira: 1100,
+    opportunityReason: "Expanding international trade desks require cross-border currency hedging integration.",
+    riskReasons: [],
+    aiInsight: "Pristine relationship health with strong expansion appetite across all treasury modules.",
+    recommendedAction: "Initiate strategic dialogue for cross-border liquidity clearing expansion.",
+    tags: ["High Value", "Pristine", "Expansion Ready"]
+  },
+  {
+    id: "cust-6",
+    name: "Crestview Capital Partners",
+    businessUnit: "Strategic Accounts",
+    tier: "Enterprise",
+    status: "active",
+    healthScore: 88,
+    arrNaira: 1850,
+    arrUSD: 2.85,
+    ltvNaira: 11200,
+    ltvUSD: 17.23,
+    since: "Jun 2022",
+    owner: "Elena Cho",
+    contactName: "Rachel Vance",
+    contactRole: "Managing Director",
+    contactEmail: "r.vance@crestviewcap.com",
+    industry: "Private Equity",
+    growthYoY: 18.2,
+    engagementLevel: 89,
+    contractStatus: "Active",
+    supportActivity: "Normal",
+    supportTickets: 4,
+    paymentBehavior: "Pristine",
+    paymentStatus: "pristine",
+    riskLevel: "Minimal Risk",
+    riskScore: 12,
+    expansionPotential: "Medium",
+    potentialArrNaira: 2300,
+    opportunityNaira: 450,
+    opportunityReason: "Fund III closing will require 40 new analytical seats and automated LP reporting.",
+    riskReasons: [],
+    aiInsight: "Rapidly expanding fund structure generating increased institutional demand.",
+    recommendedAction: "Deliver Fund III analytical expansion proposal before end of quarter.",
+    tags: ["Institutional", "Growth Account"]
+  },
+  {
+    id: "cust-7",
+    name: "Aurelius Health Systems",
+    businessUnit: "Customer Operations",
+    tier: "Enterprise",
+    status: "onboarding",
+    healthScore: 78,
+    arrNaira: 1420,
+    arrUSD: 2.18,
+    ltvNaira: 7600,
+    ltvUSD: 11.69,
+    since: "May 2026",
+    owner: "Jordan Lee",
+    contactName: "Dr. Kemi Adeleke",
+    contactRole: "Chief Medical Officer",
+    contactEmail: "k.adeleke@aureliushealth.com",
+    industry: "Healthcare Networks",
+    growthYoY: 45.0,
+    engagementLevel: 82,
+    contractStatus: "Onboarding Stage 3",
+    supportActivity: "Integration Support",
+    supportTickets: 8,
+    paymentBehavior: "Standard (Net 30)",
+    paymentStatus: "standard",
+    riskLevel: "Low Risk",
+    riskScore: 22,
+    expansionPotential: "High",
+    potentialArrNaira: 2100,
+    opportunityNaira: 680,
+    opportunityReason: "Hospital group acquisition will bring 14 additional facilities onto the unified claims platform.",
+    riskReasons: [
+      "Custom EHR integration requires dedicated API mapping"
+    ],
+    aiInsight: "Strong onboarding momentum with positive executive sentiment.",
+    recommendedAction: "Complete EHR data schema synchronization by target milestone.",
+    tags: ["Onboarding", "Fast Growing"]
+  },
+  {
+    id: "cust-8",
+    name: "Dangote Industrial Consortium",
+    businessUnit: "Enterprise Operations",
+    tier: "Enterprise",
+    status: "active",
+    healthScore: 89,
+    arrNaira: 2800,
+    arrUSD: 4.31,
+    ltvNaira: 19400,
+    ltvUSD: 29.85,
+    since: "Nov 2021",
+    owner: "Priya Nair",
+    contactName: "Alhaji Bello Sani",
+    contactRole: "Group Treasury Director",
+    contactEmail: "b.sani@dangoteind.com",
+    industry: "Manufacturing & Conglomerate",
+    growthYoY: 28.4,
+    engagementLevel: 91,
+    contractStatus: "Active Multi-Year SLA",
+    supportActivity: "Minimal Tickets",
+    supportTickets: 3,
+    paymentBehavior: "Pristine (Net 15)",
+    paymentStatus: "pristine",
+    riskLevel: "Minimal Risk",
+    riskScore: 10,
+    expansionPotential: "High",
+    potentialArrNaira: 4100,
+    opportunityNaira: 1300,
+    opportunityReason: "Consortium usage expanded 41% while contracted capacity remains on base tier. Upgrading capacity unlocks ₦1,300M ARR.",
+    riskReasons: [],
+    aiInsight: "High-yield account exceeding capacity limits with strong payment discipline and loyalty.",
+    recommendedAction: "Present capacity realignment contract update before Q4 budget cycle.",
+    tags: ["High Value", "Top Account", "Capacity Expansion"]
+  }
+];

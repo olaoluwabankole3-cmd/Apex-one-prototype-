@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { Search, Loader2 } from "lucide-react";
 import clsx from "clsx";
-import { customers } from "@/lib/mockData";
-import { CustomerStatus } from "@/lib/types";
+import { customerRepository } from "@/lib/data/repositories";
+import { Customer, CustomerStatus } from "@/lib/types";
 
 interface CustomerListProps {
   selectedId: string;
@@ -31,11 +31,35 @@ const filters: Array<{ id: "all" | CustomerStatus; label: string }> = [
 ];
 
 export default function CustomerList({ selectedId, onSelect }: CustomerListProps) {
+  const [data, setData] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | CustomerStatus>("all");
 
+  useEffect(() => {
+    let isMounted = true;
+    customerRepository.getCustomers()
+      .then((res) => {
+        if (isMounted) {
+          setData(res);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load customers:", err);
+        if (isMounted) {
+          setData([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
-    return customers.filter((c) => {
+    return data.filter((c) => {
       const matchesFilter = filter === "all" || c.status === filter;
       const matchesQuery =
         !query.trim() ||
@@ -43,7 +67,7 @@ export default function CustomerList({ selectedId, onSelect }: CustomerListProps
         c.subsidiary.toLowerCase().includes(query.toLowerCase());
       return matchesFilter && matchesQuery;
     });
-  }, [query, filter]);
+  }, [data, query, filter]);
 
   return (
     <div className="flex h-[calc(100vh-160px)] min-h-[560px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-charcoal/40 shadow-glass">
@@ -76,7 +100,12 @@ export default function CustomerList({ selectedId, onSelect }: CustomerListProps
       </div>
 
       <div className="flex-1 overflow-y-auto p-2">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12 text-ivory/40 gap-2 text-xs">
+            <Loader2 className="animate-spin" size={16} />
+            <span>Loading accounts...</span>
+          </div>
+        ) : filtered.length === 0 ? (
           <p className="px-3 py-6 text-center text-[12.5px] text-ivory/35">No customers match.</p>
         ) : (
           <div className="space-y-1">
@@ -97,11 +126,13 @@ export default function CustomerList({ selectedId, onSelect }: CustomerListProps
                     <span className="truncate text-[12.5px] font-medium text-ivory/90">{c.name}</span>
                   </span>
                   <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ivory/40">
-                    <span className={clsx("h-1.5 w-1.5 rounded-full", statusDot[c.status])} />
-                    {statusLabel[c.status]} · {c.subsidiary}
+                    <span className={clsx("h-1.5 w-1.5 rounded-full", statusDot[c.status] || "bg-emerald")} />
+                    {statusLabel[c.status] || c.status} · {c.subsidiary}
                   </span>
                 </span>
-                <span className="shrink-0 font-mono text-[11px] text-ivory/35">${c.arr.toFixed(1)}M</span>
+                <span className="shrink-0 font-mono text-[11px] text-ivory/35">
+                  {c.arr >= 1_000_000 ? `$${(c.arr / 1_000_000).toFixed(1)}M` : `$${c.arr.toFixed(1)}M`}
+                </span>
               </button>
             ))}
           </div>
@@ -110,3 +141,4 @@ export default function CustomerList({ selectedId, onSelect }: CustomerListProps
     </div>
   );
 }
+

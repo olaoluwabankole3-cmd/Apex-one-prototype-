@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import { useRole } from "@/components/layout/RoleContext";
-import { company } from "@/lib/mockData";
+import { company } from "@/lib/organizationConfig";
+
 
 const subtitleByRole: Record<string, string> = {
   CEO: "Operational health across every business unit, at a glance.",

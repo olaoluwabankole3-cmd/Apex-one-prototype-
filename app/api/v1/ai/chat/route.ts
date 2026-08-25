@@ -5,7 +5,7 @@ import { BackendError } from "@/lib/backend/core/errors";
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const body = await req.json();
 
     if (!body.prompt) {

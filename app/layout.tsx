@@ -6,6 +6,7 @@ import { RoleProvider } from "@/components/layout/RoleContext";
 import { ValueEngineProvider } from "@/components/value-engine/ValueEngineContext";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
+import { ClientErrorBoundary } from "@/components/layout/ClientErrorBoundary";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -41,19 +42,21 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
       <body className="font-body bg-matte text-ivory antialiased">
-        <OrganizationProvider>
-          <RoleProvider>
-            <ValueEngineProvider>
-              <div className="flex min-h-screen">
-                <Sidebar />
-                <div className="flex-1 flex flex-col min-w-0">
-                  <Topbar />
-                  <main className="flex-1 px-4 sm:px-6 pb-12 pt-6 lg:px-10 ml-0 -mt-[8px]">{children}</main>
+        <ClientErrorBoundary>
+          <OrganizationProvider>
+            <RoleProvider>
+              <ValueEngineProvider>
+                <div className="flex min-h-screen">
+                  <Sidebar />
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <Topbar />
+                    <main className="flex-1 px-4 sm:px-6 pb-12 pt-6 lg:px-10 ml-0 -mt-[8px]">{children}</main>
+                  </div>
                 </div>
-              </div>
-            </ValueEngineProvider>
-          </RoleProvider>
-        </OrganizationProvider>
+              </ValueEngineProvider>
+            </RoleProvider>
+          </OrganizationProvider>
+        </ClientErrorBoundary>
       </body>
     </html>
   );

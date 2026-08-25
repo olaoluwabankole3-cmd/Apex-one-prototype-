@@ -1,10 +1,51 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { kpis } from "@/lib/mockData";
+import { Loader2 } from "lucide-react";
+import { revenueRepository } from "@/lib/data/repositories";
+import { KpiDatum } from "@/lib/types";
 
 export default function InlinePerformanceStats() {
-  const featured = kpis.filter((k) => ["revenue", "growth", "customers", "portfolio"].includes(k.id));
+  const [data, setData] = useState<KpiDatum[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    revenueRepository.getKpis()
+      .then((kpis) => {
+        if (isMounted) {
+          setData(kpis);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load KPIs:", err);
+        if (isMounted) {
+          setData([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const featured = data.filter((k) => ["revenue", "growth", "customers", "portfolio"].includes(k.id));
+
+  if (loading) {
+    return (
+      <div className="mt-3 flex items-center justify-center py-4 text-ivory/40 gap-2 text-xs">
+        <Loader2 className="animate-spin" size={14} />
+        <span>Loading performance stats...</span>
+      </div>
+    );
+  }
+
+  if (featured.length === 0) {
+    return null;
+  }
 
   return (
     <motion.div
@@ -32,3 +73,4 @@ export default function InlinePerformanceStats() {
     </motion.div>
   );
 }
+

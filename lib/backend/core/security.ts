@@ -11,6 +11,8 @@ import {
   NotFoundError,
   CrossTenantViolationError,
 } from "./errors";
+import { generateSecureRequestId } from "./crypto";
+import { defaultSessionStore } from "../domains/auth/authProvider";
 
 export type { TenantContext, PermissionCapability };
 export {
@@ -29,10 +31,14 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "org:admin",
     "customer:read",
     "customer:write",
+    "customer:delete",
     "financial:read",
     "financial:write",
     "document:read",
     "document:write",
+    "document:delete",
+    "knowledge:read",
+    "knowledge:write",
     "workflow:read",
     "workflow:write",
     "workflow:execute",
@@ -40,7 +46,10 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "value:read",
     "value:write",
     "value:approve",
+    "action:create",
     "action:approve",
+    "action:execute",
+    "action:cancel",
     "audit:read",
   ],
   Operations: [
@@ -49,12 +58,16 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "customer:write",
     "document:read",
     "document:write",
+    "knowledge:read",
+    "knowledge:write",
     "workflow:read",
     "workflow:write",
     "workflow:execute",
     "ai:execute",
     "value:read",
     "value:write",
+    "action:create",
+    "action:execute",
     "audit:read",
   ],
   "Relationship Manager": [
@@ -63,14 +76,17 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "customer:write",
     "document:read",
     "document:write",
+    "knowledge:read",
     "ai:execute",
     "value:read",
+    "action:create",
   ],
   Compliance: [
     "org:read",
     "customer:read",
     "financial:read",
     "document:read",
+    "knowledge:read",
     "audit:read",
     "ai:execute",
     "value:read",
@@ -79,11 +95,13 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "org:read",
     "customer:read",
     "document:read",
+    "knowledge:read",
     "ai:execute",
   ],
   "Customer / Investor": [
     "customer:read",
     "document:read",
+    "knowledge:read",
     "value:read",
   ],
   Administrator: [
@@ -97,6 +115,9 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "financial:write",
     "document:read",
     "document:write",
+    "document:delete",
+    "knowledge:read",
+    "knowledge:write",
     "workflow:read",
     "workflow:write",
     "workflow:execute",
@@ -104,13 +125,16 @@ export const ROLE_PERMISSIONS: Record<string, PermissionCapability[]> = {
     "value:read",
     "value:write",
     "value:approve",
+    "action:create",
     "action:approve",
+    "action:execute",
+    "action:cancel",
     "audit:read",
   ],
 };
 
 export function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return generateSecureRequestId();
 }
 
 export interface AuthSession {
@@ -126,59 +150,34 @@ export interface AuthSession {
   expiresAt: string;
 }
 
-// In-memory or Redis-backed session token store for active tokens
-const activeSessions: Map<string, AuthSession> = new Map();
-
-export function createSessionToken(
+export async function createSessionToken(
   user: { id: string; email: string; name: string },
   org: { id: string; name: string },
   role: string
-): AuthSession {
-  const token = `apex_jwt_${Math.random().toString(36).substring(2)}_${Date.now()}`;
+): Promise<AuthSession> {
   const permissions = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS["Operations"];
-  const now = new Date();
-  const expires = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
-
-  const session: AuthSession = {
-    token,
-    userId: user.id,
-    userEmail: user.email,
-    userName: user.name,
-    organizationId: org.id,
-    organizationName: org.name,
-    role,
-    permissions,
-    createdAt: now.toISOString(),
-    expiresAt: expires.toISOString(),
-  };
-
-  activeSessions.set(token, session);
-  return session;
+  return defaultSessionStore.createSession(user, org, role, permissions);
 }
 
-export function getSession(token: string): AuthSession | undefined {
-  const session = activeSessions.get(token);
-  if (!session) return undefined;
-
-  // Check expiration
-  if (new Date(session.expiresAt) < new Date()) {
-    activeSessions.delete(token);
-    return undefined;
-  }
-  return session;
+export async function getSession(token: string): Promise<AuthSession | undefined> {
+  return defaultSessionStore.getSession(token);
 }
 
-export function revokeSession(token: string): boolean {
-  return activeSessions.delete(token);
+export async function revokeSession(token: string): Promise<boolean> {
+  return defaultSessionStore.revokeSession(token);
 }
 
 /**
  * Resolve the authenticated Tenant Context from request headers.
  * 
- * Never trusts client `x-organization-id` without validating that the authenticated
- * user belongs to that organization.
+ * Rules:
+ * 1. Missing or invalid Bearer token strictly throws UnauthorizedError (401).
+ * 2. No automatic demo fallback in production.
+ * 3. Client headers cannot override the trusted organizationId established by authentication.
  */
-export function resolveTenantContext(headers: Headers | Record<string, string | string[] | undefined>): TenantContext {
+export async function resolveTenantContext(
+  headers: Headers | Record<string, string | string[] | undefined>
+): Promise<TenantContext> {
   const requestId = generateRequestId();
   const timestamp = new Date().toISOString();
 
@@ -191,25 +190,36 @@ export function resolveTenantContext(headers: Headers | Record<string, string | 
     authHeader = Array.isArray(raw) ? raw[0] : raw;
   }
 
-  // Support demo / fallback credentials for initial development if no token provided
+  // Strict check: if no Bearer token
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    // Default development context for unauthenticated requests in demo
-    return {
-      organizationId: "apex-demo",
-      userId: "usr-marcus-thorne",
-      userEmail: "m.thorne@apexsync.ai",
-      userRole: "CEO",
-      permissions: ROLE_PERMISSIONS["CEO"],
-      requestId,
-      timestamp,
-    };
+    // Only allow development-specific demo mode if explicitly activated via environment variables
+    const isExplicitDevDemo =
+      (process.env.APP_ENV === "development" || process.env.NODE_ENV === "development") &&
+      process.env.DEMO_MODE === "true";
+
+    if (isExplicitDevDemo) {
+      return {
+        organizationId: "apex-demo",
+        userId: "usr-marcus-thorne",
+        userEmail: "m.thorne@apexsync.ai",
+        userRole: "CEO",
+        permissions: ROLE_PERMISSIONS["CEO"],
+        requestId,
+        timestamp,
+      };
+    }
+
+    throw new UnauthorizedError("Authentication required: Missing or invalid Bearer token");
   }
 
   const token = authHeader.replace("Bearer ", "").trim();
-  const session = getSession(token);
+  if (!token) {
+    throw new UnauthorizedError("Authentication required: Empty Bearer token");
+  }
 
+  const session = await defaultSessionStore.getSession(token);
   if (!session) {
-    throw new UnauthorizedError("Invalid or expired authentication session");
+    throw new UnauthorizedError("Authentication failed: Invalid or expired session token");
   }
 
   return {
@@ -227,7 +237,7 @@ export function resolveTenantContext(headers: Headers | Record<string, string | 
  * Verify that the TenantContext possesses a required permission capability.
  */
 export function requirePermission(ctx: TenantContext, permission: PermissionCapability) {
-  if (!ctx.permissions.includes(permission)) {
+  if (!ctx.permissions || !ctx.permissions.includes(permission)) {
     throw new ForbiddenError(`Missing required capability '${permission}' for role '${ctx.userRole}'`);
   }
 }

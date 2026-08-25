@@ -6,6 +6,16 @@ export type Role =
   | "Customer Service"
   | "Customer / Investor";
 
+export const ALL_ROLES: Role[] = [
+  "CEO",
+  "Operations",
+  "Relationship Manager",
+  "Compliance",
+  "Customer Service",
+  "Customer / Investor",
+];
+
+
 export interface KpiDatum {
   id: string;
   label: string;
@@ -62,6 +72,7 @@ export interface ChatMessage {
 export interface SuggestedPrompt {
   id: string;
   label: string;
+  prompt?: string;
   roles: Role[];
 }
 
@@ -187,11 +198,14 @@ export interface AutomationOpportunity {
   effort: "low" | "medium" | "high";
 }
 
-export interface SlaPoint {
+export interface SlaTrendPoint {
   month: string;
   compliance: number;
   target: number;
 }
+
+export type SlaPoint = SlaTrendPoint;
+
 
 // ── Document Intelligence ────────────────────────────────────────────────
 
@@ -230,6 +244,13 @@ export interface RevenueBySubsidiaryPoint {
   customerOps: number;
 }
 
+export interface SubsidiaryRevenuePoint {
+  name: string;
+  revenue: number;
+  target: number;
+  margin: number;
+}
+
 export interface CustomerGrowthPoint {
   month: string;
   customers: number;
@@ -242,6 +263,9 @@ export interface SubsidiaryPerformance {
   growthPct: number;
   slaCompliance: number;
 }
+
+export type SubsidiaryPerformanceItem = SubsidiaryPerformance;
+
 
 export interface SegmentBreakdown {
   segment: "Enterprise" | "Mid-Market" | "SMB";
@@ -302,7 +326,7 @@ export interface WorkflowDef {
 
 // ── Notifications ────────────────────────────────────────────────────────
 
-export type NotificationType = "alert" | "mention" | "workflow" | "system";
+export type NotificationType = "alert" | "mention" | "workflow" | "system" | "action" | "info" | "urgent";
 export type NotificationSeverity = "critical" | "warning" | "info" | "success";
 
 export interface NotificationItem {
@@ -312,8 +336,11 @@ export interface NotificationItem {
   title: string;
   description: string;
   time: string;
+  timestamp?: string;
   read: boolean;
   source: string;
+  subsidiary?: string;
+  actionUrl?: string;
 }
 
 // ── Calendar ─────────────────────────────────────────────────────────────
@@ -323,8 +350,10 @@ export interface CalendarEvent {
   title: string;
   date: string;
   time: string;
-  type: "meeting" | "renewal" | "workflow" | "review";
+  type: "meeting" | "renewal" | "workflow" | "review" | "board" | "client" | "operational";
   attendees: string[];
+  participants?: string[];
+  aiSummary?: string;
   subsidiary?: string;
 }
 
@@ -349,7 +378,11 @@ export interface KnowledgeArticle {
 export interface IntegrationItem {
   id: string;
   name: string;
-  description: string;
-  connected: boolean;
+  description?: string;
+  connected?: boolean;
+  status?: "connected" | "disconnected" | "syncing" | "error";
   category: string;
+  lastSync?: string;
+  eventsToday?: number;
+  icon?: string;
 }

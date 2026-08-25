@@ -1,5 +1,7 @@
 /**
  * APEX ONE — Domain Entities & Database Schema Types
+ * 
+ * Strict, type-safe entity definitions for all core domains.
  */
 
 export interface OrganizationRecord {
@@ -23,6 +25,8 @@ export interface UserRecord {
   title: string;
   avatarUrl?: string;
   status: "active" | "suspended" | "pending";
+  passwordHash?: string;
+  passwordSalt?: string;
   createdAt: string;
 }
 
@@ -83,33 +87,156 @@ export interface TransactionRecord {
   createdAt: string;
 }
 
+// -------------------------------------------------------------
+// DOCUMENT DOMAIN SCHEMA
+// -------------------------------------------------------------
+
+export type DocumentProcessingStatus = "uploading" | "processing" | "indexed" | "failed" | "archived";
+export type DocumentFileType = "pdf" | "doc" | "docx" | "xlsx" | "csv" | "image" | "json";
+
+export interface DocumentExtractionField {
+  label: string;
+  value: string;
+  confidence: number;
+  sourceLocation?: string;
+}
+
+export interface DocumentMetadata {
+  pageCount?: number;
+  fileSizeBytes: number;
+  mimeType: string;
+  checksumSha256?: string;
+  storageUri: string;
+  extractedAt?: string;
+  indexRef?: string;
+}
+
 export interface DocumentRecord {
   id: string;
   organizationId: string;
   customerId?: string;
   name: string;
-  fileType: "pdf" | "doc" | "xlsx" | "image";
-  category: string;
+  fileType: DocumentFileType;
+  category: "Contract" | "Invoice" | "SLA Agreement" | "Audit Report" | "Board Paper" | "Compliance Document" | "Other";
   size: string;
   uploadedBy: string;
   storageKey: string;
-  status: "processing" | "processed" | "failed";
+  status: DocumentProcessingStatus;
+  metadata: DocumentMetadata;
   aiSummary?: string;
-  extractedFields?: { label: string; value: string }[];
+  extractedFields: DocumentExtractionField[];
+  tags: string[];
   createdAt: string;
+  updatedAt: string;
 }
+
+// -------------------------------------------------------------
+// KNOWLEDGE HUB DOMAIN SCHEMA
+// -------------------------------------------------------------
+
+export type KnowledgeCategory =
+  | "Playbook"
+  | "Policy"
+  | "Onboarding"
+  | "Product"
+  | "Financial Regulation"
+  | "Engineering Standard"
+  | "Treasury Guideline";
 
 export interface KnowledgeItemRecord {
   id: string;
   organizationId: string;
   title: string;
-  category: "Playbook" | "Policy" | "Onboarding" | "Product" | "Financial Regulation";
+  category: KnowledgeCategory;
   content: string;
+  summary?: string;
   author: string;
   sourceDocId?: string;
+  embeddingRef?: string;
   tags: string[];
+  isPublicPlatformKnowledge?: boolean;
+  version: number;
   createdAt: string;
+  updatedAt: string;
 }
+
+// -------------------------------------------------------------
+// WORKFLOW DOMAIN SCHEMA
+// -------------------------------------------------------------
+
+export type WorkflowNodeType =
+  | "trigger"
+  | "condition"
+  | "ai_agent"
+  | "action"
+  | "integration"
+  | "human_approval"
+  | "notification";
+
+export interface WorkflowNode {
+  id: string;
+  type: WorkflowNodeType;
+  title: string;
+  description?: string;
+  configuration: Record<string, string | number | boolean | string[]>;
+  position?: { x: number; y: number };
+}
+
+export interface WorkflowConnection {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
+  conditionLabel?: string;
+}
+
+export type WorkflowStatus = "active" | "draft" | "paused" | "archived";
+
+export interface WorkflowRecord {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  subsidiary: string;
+  status: WorkflowStatus;
+  version: number;
+  nodes: WorkflowNode[];
+  connections: WorkflowConnection[];
+  runsCount: number;
+  successRate: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorkflowRunStatus = "pending" | "running" | "waiting_approval" | "completed" | "failed" | "cancelled";
+
+export interface WorkflowRunStepRecord {
+  stepId: string;
+  nodeId: string;
+  nodeTitle: string;
+  status: "pending" | "executing" | "completed" | "failed" | "skipped";
+  output?: Record<string, unknown>;
+  errorMessage?: string;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface WorkflowRunRecord {
+  id: string;
+  organizationId: string;
+  workflowId: string;
+  workflowVersion: number;
+  triggeredBy: string;
+  triggerType: "manual" | "event" | "schedule" | "signal";
+  status: WorkflowRunStatus;
+  steps: WorkflowRunStepRecord[];
+  contextData: Record<string, unknown>;
+  startedAt: string;
+  completedAt?: string;
+}
+
+// -------------------------------------------------------------
+// ORGANIZATIONAL MEMORY SCHEMA
+// -------------------------------------------------------------
 
 export interface OrganizationalMemoryRecord {
   id: string;
@@ -132,7 +259,7 @@ export interface EventRecord {
   entityType: string;
   entityId: string;
   actor: string;
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -144,9 +271,14 @@ export interface SignalRecord {
   title: string;
   description: string;
   evidence: string;
+  estimatedFinancialImpact: number;
   status: "active" | "investigating" | "resolved";
   detectedAt: string;
 }
+
+// -------------------------------------------------------------
+// VALUE INTELLIGENCE SCHEMA
+// -------------------------------------------------------------
 
 export interface ValueOpportunityRecord {
   id: string;
@@ -156,6 +288,8 @@ export interface ValueOpportunityRecord {
   potentialValue: number;
   confidence: number;
   evidence: string;
+  sourceEntityId?: string;
+  sourceEntityType?: "Contract" | "Customer" | "Signal" | "Transaction" | "Operation";
   recommendedAction: string;
   expectedOutcome: string;
   realizationSpeed: "Fastest" | "Medium" | "Long-Term";
@@ -181,19 +315,9 @@ export interface ValueCapturedRecord {
   createdAt: string;
 }
 
-export interface WorkflowRecord {
-  id: string;
-  organizationId: string;
-  name: string;
-  description: string;
-  subsidiary: string;
-  status: "active" | "draft" | "paused";
-  nodes: any[];
-  connections: any[];
-  runsCount: number;
-  successRate: number;
-  createdAt: string;
-}
+// -------------------------------------------------------------
+// EXECUTION ACTIONS SCHEMA
+// -------------------------------------------------------------
 
 export interface ActionRecord {
   id: string;
@@ -225,6 +349,6 @@ export interface AuditLogRecord {
   resourceId: string;
   requestId: string;
   status: "success" | "denied" | "error";
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   timestamp: string;
 }

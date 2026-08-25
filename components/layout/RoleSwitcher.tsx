@@ -4,8 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRole } from "./RoleContext";
-import { roles } from "@/lib/mockData";
+import { ALL_ROLES } from "@/lib/types";
 import clsx from "clsx";
+
 
 export default function RoleSwitcher() {
   const { role, setRole } = useRole();
@@ -47,8 +48,9 @@ export default function RoleSwitcher() {
             className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/[0.08] bg-charcoal-light/95 p-1.5 shadow-glass backdrop-blur-xl"
             role="listbox"
           >
-            {roles.map((r) => (
+            {ALL_ROLES.map((r) => (
               <li key={r}>
+
                 <button
                   onClick={() => {
                     setRole(r);

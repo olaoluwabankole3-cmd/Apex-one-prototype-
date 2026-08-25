@@ -5,7 +5,7 @@ import { BackendError } from "@/lib/backend/core/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const summary = await valueService.getSummary(ctx);
     return NextResponse.json({ success: true, organizationId: ctx.organizationId, data: summary });
   } catch (err: any) {

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRole } from "@/components/layout/RoleContext";
-import { company } from "@/lib/mockData";
+import { company } from "@/lib/organizationConfig";
+
 
 const subtitleByRole: Record<string, string> = {
   CEO: "Here's how Apex Sync is performing across every business unit.",

@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect, KeyboardEvent, useMemo } from "react";
 import { useRole } from "@/components/layout/RoleContext";
-import { company } from "@/lib/mockData";
+import { company } from "@/lib/organizationConfig";
 import { useOrganization } from "@/components/layout/OrganizationContext";
+
 import { isDemoMode } from "@/lib/demo";
 import { 
   Database, 

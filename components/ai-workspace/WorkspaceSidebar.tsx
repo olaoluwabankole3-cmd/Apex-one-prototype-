@@ -3,7 +3,8 @@
 import { Database, Radio } from "lucide-react";
 import GlassCard from "@/components/ui/GlassCard";
 import SuggestedPrompts from "./SuggestedPrompts";
-import { company } from "@/lib/mockData";
+import { company } from "@/lib/organizationConfig";
+
 
 interface WorkspaceSidebarProps {
   onSelect: (prompt: string) => void;

@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Role, ActivityItem, NotificationItem } from "@/lib/types";
-import { activity as initialActivities, notifications as initialNotifications } from "@/lib/mockData";
+import { notificationRepository } from "@/lib/data/repositories";
 import { isDemoMode } from "@/lib/demo";
+
 
 interface EcosystemContextValue {
   role: Role;
@@ -36,11 +37,18 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const [portfolioValue, setPortfolioValue] = useState<number>(0);
 
   useEffect(() => {
-    const handleSync = () => {
+    let isMounted = true;
+    const handleSync = async () => {
       if (isDemoMode()) {
-        setActivities(initialActivities);
-        setNotifications(initialNotifications);
+        const [acts, notifs] = await Promise.all([
+          notificationRepository.getActivities(),
+          notificationRepository.getNotifications(),
+        ]);
+        if (!isMounted) return;
+        setActivities(acts);
+        setNotifications(notifs);
         setSubmittedDocuments([
+
           {
             id: "doc-init-1",
             name: "Government_Issued_ID.pdf",

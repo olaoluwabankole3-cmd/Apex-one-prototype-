@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, Download } from "lucide-react";
-import { reportSections } from "@/lib/mockData";
+import { FileText, Download, Loader2 } from "lucide-react";
+import { aiRepository } from "@/lib/data/repositories";
+import { ReportSection } from "@/lib/types";
 
 export default function InlineExecutiveReport() {
+  const [sections, setSections] = useState<ReportSection[]>([]);
+  const [loading, setLoading] = useState(true);
   const [today, setToday] = useState("");
 
   useEffect(() => {
@@ -16,6 +19,26 @@ export default function InlineExecutiveReport() {
         year: "numeric",
       })
     );
+
+    let isMounted = true;
+    aiRepository.getReportSections()
+      .then((res) => {
+        if (isMounted) {
+          setSections(res);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load report sections:", err);
+        if (isMounted) {
+          setSections([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -32,7 +55,7 @@ export default function InlineExecutiveReport() {
           </span>
           <div>
             <p className="font-display text-[13.5px] font-bold text-ivory">
-              Q3 Executive Report — Apex Sync
+              Executive Briefing & Strategic Report
             </p>
             <p className="text-[11px] text-ivory/40">Generated {today}</p>
           </div>
@@ -44,15 +67,27 @@ export default function InlineExecutiveReport() {
       </div>
 
       <div className="divide-y divide-white/[0.05]">
-        {reportSections.map((section, i) => (
-          <div key={section.id} className="px-4 py-3">
-            <p className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-gold/70">
-              {String(i + 1).padStart(2, "0")} · {section.title}
-            </p>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-ivory/65">{section.summary}</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-ivory/40 gap-2 text-xs">
+            <Loader2 className="animate-spin" size={14} />
+            <span>Loading report sections...</span>
           </div>
-        ))}
+        ) : sections.length === 0 ? (
+          <div className="py-6 text-center text-xs text-ivory/40">
+            No report data currently available.
+          </div>
+        ) : (
+          sections.map((section, i) => (
+            <div key={section.id} className="px-4 py-3">
+              <p className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-gold/70">
+                {String(i + 1).padStart(2, "0")} · {section.title}
+              </p>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-ivory/65">{section.summary}</p>
+            </div>
+          ))
+        )}
       </div>
     </motion.div>
   );
 }
+

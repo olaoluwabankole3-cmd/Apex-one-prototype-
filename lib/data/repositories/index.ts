@@ -8,3 +8,4 @@ export * from "./notificationRepository";
 export * from "./intelligenceRepository";
 export * from "./valueRepository";
 export * from "./aiRepository";
+export * from "./knowledgeRepository";

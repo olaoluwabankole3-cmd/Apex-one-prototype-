@@ -1,9 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { company } from "@/lib/mockData";
 
 export default function CalendarHeader() {
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}

@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import InternalOnlyShield from "@/components/layout/InternalOnlyShield";
 import { useRole } from "@/components/layout/RoleContext";
-import { company } from "@/lib/mockData";
+import { company } from "@/lib/organizationConfig";
+
 
 // Type definitions for operations intelligence
 interface Bottleneck {

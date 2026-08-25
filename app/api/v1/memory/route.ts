@@ -5,7 +5,7 @@ import { BackendError } from "@/lib/backend/core/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") || undefined;
     const search = searchParams.get("search") || undefined;
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const body = await req.json();
     const newMemory = await memoryService.addMemory(body, ctx);
     return NextResponse.json({ success: true, data: newMemory }, { status: 201 });

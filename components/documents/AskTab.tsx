@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Wand2, Loader2 } from "lucide-react";
-import { getDocumentAnswer } from "@/lib/mockData";
+import { documentRepository } from "@/lib/data/repositories";
 import { ChatMessage, DocumentItem } from "@/lib/types";
+
 import AiOrb from "@/components/ai-workspace/AiOrb";
 import ChatMessageBubble from "@/components/ai-workspace/ChatMessageBubble";
 import ChatInput from "@/components/ai-workspace/ChatInput";
@@ -48,12 +49,13 @@ export default function AskTab({ doc }: AskTabProps) {
     setInput("");
     setThinking(true);
 
-    const delay = 600 + Math.random() * 400;
-    window.setTimeout(() => {
-      const answer = getDocumentAnswer(trimmed, doc);
+    const delay = 400 + Math.random() * 200;
+    window.setTimeout(async () => {
+      const answer = await documentRepository.getDocumentAnswer(trimmed, doc);
       setThinking(false);
       setMessages((prev) => [...prev, { id: nextId(), role: "assistant", content: answer, animate: true }]);
     }, delay);
+
   };
 
   return (

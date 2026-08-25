@@ -115,7 +115,13 @@ export const defaultOrganizationConfig: OrganizationConfig = {
   }
 };
 
+export const company = {
+  name: "Apex Sync",
+  subsidiaries: defaultOrganizationConfig.organizationStructure.businessUnits,
+};
+
 // Centralized formatting utilities
+
 export function formatCurrency(
   value: number,
   currencySymbol: string = defaultOrganizationConfig.locale.currencySymbol,

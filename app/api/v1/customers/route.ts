@@ -5,7 +5,7 @@ import { BackendError } from "@/lib/backend/core/errors";
 
 export async function GET(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const { searchParams } = new URL(req.url);
     const tier = searchParams.get("tier") || undefined;
     const status = searchParams.get("status") || undefined;
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = resolveTenantContext(req.headers);
+    const ctx = await resolveTenantContext(req.headers);
     const body = await req.json();
     const newCustomer = await customerService.createCustomer(body, ctx);
     return NextResponse.json({ success: true, data: newCustomer }, { status: 201 });

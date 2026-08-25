@@ -1,19 +1,18 @@
 /**
  * APEX ONE — Organizational Memory Domain Service
- * 
- * Provides long-term institutional memory with strict source provenance.
  */
 
 import { db } from "../../database/store";
 import { OrganizationalMemoryRecord } from "../../database/schema";
-import { TenantContext, requirePermission, ValidationError } from "../../core/security";
+import { TenantContext, requirePermission } from "../../core/security";
+import { Validator } from "../../core/validation";
 
 export interface CreateMemoryDto {
-  type: "fact" | "history" | "decision" | "insight" | "policy";
+  type?: "fact" | "history" | "decision" | "insight" | "policy";
   title: string;
   content: string;
   source: string;
-  sourceReference: string;
+  sourceReference?: string;
   confidence?: number;
   effectiveAt?: string;
   verified?: boolean;
@@ -29,26 +28,27 @@ export class MemoryService {
   ): Promise<OrganizationalMemoryRecord[]> {
     requirePermission(ctx, "org:read");
 
-    let list = Array.from(db.memory.values()).filter((m) => m.organizationId === ctx.organizationId);
-
-    if (filters?.type && filters.type !== "all") {
-      list = list.filter((m) => m.type === filters.type);
-    }
-    if (filters?.search) {
-      const q = filters.search.toLowerCase();
-      list = list.filter((m) => m.title.toLowerCase().includes(q) || m.content.toLowerCase().includes(q));
-    }
-
-    return list;
+    return db.memoryRepo.findMany(ctx, (m) => {
+      if (filters?.type && filters.type !== "all" && m.type !== filters.type) {
+        return false;
+      }
+      if (filters?.search) {
+        const q = filters.search.toLowerCase();
+        if (!m.title.toLowerCase().includes(q) && !m.content.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
   }
 
   /**
-   * Retrieve a specific memory record, enforcing tenant isolation.
+   * Retrieve a specific memory record, enforcing repository tenant isolation.
    */
   public async getMemoryById(id: string, ctx: TenantContext): Promise<OrganizationalMemoryRecord> {
     requirePermission(ctx, "org:read");
-    const raw = db.memory.get(id);
-    return db.verifyTenantOwnership(raw, ctx, "OrganizationalMemory");
+    Validator.requireId(id, "memoryId");
+    return db.memoryRepo.findById(id, ctx, "OrganizationalMemory");
   }
 
   /**
@@ -57,26 +57,31 @@ export class MemoryService {
   public async addMemory(dto: CreateMemoryDto, ctx: TenantContext): Promise<OrganizationalMemoryRecord> {
     requirePermission(ctx, "org:write");
 
-    if (!dto.title || !dto.content || !dto.source) {
-      throw new ValidationError("title, content, and source are required for memory records");
-    }
+    const validatedTitle = Validator.requireString(dto.title, "title", { minLength: 3, maxLength: 160 });
+    const validatedContent = Validator.requireString(dto.content, "content", { minLength: 5 });
+    const validatedSource = Validator.requireString(dto.source, "source", { minLength: 2 });
+    const validatedType = Validator.optionalEnum(
+      dto.type,
+      ["fact", "history", "decision", "insight", "policy"] as const,
+      "type"
+    ) || "fact";
+    const validatedConfidence = Validator.optionalNumber(dto.confidence, "confidence", { min: 0, max: 100 }) ?? 95;
 
     const id = `mem-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    const record: OrganizationalMemoryRecord = {
+    const recordData: Omit<OrganizationalMemoryRecord, "organizationId"> = {
       id,
-      organizationId: ctx.organizationId,
-      type: dto.type || "fact",
-      title: dto.title,
-      content: dto.content,
-      source: dto.source,
+      type: validatedType,
+      title: validatedTitle,
+      content: validatedContent,
+      source: validatedSource,
       sourceReference: dto.sourceReference || "manual_entry",
-      confidence: dto.confidence ?? 95,
+      confidence: validatedConfidence,
       effectiveAt: dto.effectiveAt || new Date().toISOString(),
       verified: dto.verified ?? true,
       createdAt: new Date().toISOString(),
     };
 
-    db.memory.set(id, record);
+    const record = await db.memoryRepo.create(recordData, ctx);
 
     db.recordAuditLog({
       organizationId: ctx.organizationId,
@@ -88,6 +93,7 @@ export class MemoryService {
       requestId: ctx.requestId,
       status: "success",
       metadata: { title: record.title, source: record.source },
+      timestamp: new Date().toISOString(),
     });
 
     return record;

@@ -14,10 +14,7 @@ export class AuditService {
    */
   public async getAuditLogs(ctx: TenantContext, limit: number = 50): Promise<AuditLogRecord[]> {
     requirePermission(ctx, "audit:read");
-
-    return db.auditLogs
-      .filter((log) => log.organizationId === ctx.organizationId)
-      .slice(0, limit);
+    return db.auditLogsRepo.findMany(ctx, limit);
   }
 }
 
